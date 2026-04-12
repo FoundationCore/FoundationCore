@@ -51,7 +51,7 @@ AlignTrailingComments:
   Kind: Always
   OverEmptyLines: 1
 
-ReflowComments: Always
+ReflowComments: true
 SpacesBeforeTrailingComments: 2
 
 InsertTrailingCommas: None
