@@ -29,6 +29,23 @@ install-deps:
         exit 1
     fi
 
+# Check formatting without modifying files
+format-check:
+    find src include \( -name '*.c' -o -name '*.h' \) | \
+        xargs clang-format --dry-run --Werror
+
+# Apply formatting in-place
+format:
+    find src include \( -name '*.c' -o -name '*.h' \) | \
+        xargs clang-format -i
+
+# Run static analysis (requires a compilation database)
+lint:
+    find src -name '*.c' | \
+        xargs clang-tidy \
+            --config-file=.clang-tidy \
+            -p build/conan-debug/compile_commands.json
+
 # Build debug binary (via Conan + CMake)
 debug:
     conan install . --profile ./.conan2/profiles/clang --build missing -s build_type=Debug

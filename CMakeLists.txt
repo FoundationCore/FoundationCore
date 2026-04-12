@@ -8,6 +8,9 @@ project(FoundationCore
         LANGUAGES C ASM_NASM
 )
 
+# Tooling
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Standards
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
