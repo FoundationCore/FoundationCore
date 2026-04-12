@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  push:
+    tags:
+      # Matches v0.1.0, v1.2.3, etc. Pre-release tags (v1.0.0-alpha.1) are
+      # intentionally excluded — add a second pattern if you want them.
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write # required for gh release create
+
+jobs:
+  release:
+    name: Create GitHub Release
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # git-cliff needs full history to traverse tags
+
+      - name: Install git-cliff
+        run: |
+          CLIFF_VERSION="2.7.0"
+          curl -sSfL \
+            "https://github.com/orhun/git-cliff/releases/download/v${CLIFF_VERSION}/git-cliff-${CLIFF_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar xz --strip-components=1
+          sudo mv git-cliff /usr/local/bin/
+
+      # Generates only the section for this tag, no header/footer boilerplate
+      - name: Generate release notes
+        run: git-cliff --current --strip all -o RELEASE_NOTES.md
+
+      # Creates the release in draft=false state with no binary attachments.
+      # Add `--draft` here if you want a review step before publishing.
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ github.ref_name }}" \
+            --title "FoundationCore ${{ github.ref_name }}" \
+            --notes-file RELEASE_NOTES.md

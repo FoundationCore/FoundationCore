@@ -1,0 +1,191 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags-ignore: ["**"] # releases handled by release.yml
+  pull_request:
+    branches: [main]
+
+env:
+  CLANG_VERSION: 19
+
+jobs:
+  format-check:
+    name: Format Check
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
+            | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-${{ env.CLANG_VERSION }} main" \
+            | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update -q
+          sudo apt-get install -y clang-format-${{ env.CLANG_VERSION }}
+          sudo update-alternatives --install /usr/bin/clang-format clang-format \
+            /usr/bin/clang-format-${{ env.CLANG_VERSION }} 100
+
+      - name: Check formatting
+        run: just format-check
+
+  build:
+    name: Build (${{ matrix.build_type }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - build_type: Debug
+            preset: conan-debug
+          - build_type: Release
+            preset: conan-release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
+            | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-${{ env.CLANG_VERSION }} main" \
+            | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update -q
+          sudo apt-get install -y \
+            clang-${{ env.CLANG_VERSION }} \
+            lld-${{ env.CLANG_VERSION }} \
+            libc++-${{ env.CLANG_VERSION }}-dev \
+            libc++abi-${{ env.CLANG_VERSION }}-dev \
+            nasm \
+            ninja-build \
+            cmake
+          sudo update-alternatives \
+            --install /usr/bin/clang clang /usr/bin/clang-${{ env.CLANG_VERSION }} 100
+          sudo update-alternatives \
+            --install /usr/bin/clang++ clang++ /usr/bin/clang++-${{ env.CLANG_VERSION }} 100
+
+      - name: Install Conan
+        run: pip install conan --quiet
+
+      - name: Cache Conan packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2/p
+          key: conan-${{ runner.os }}-clang${{ env.CLANG_VERSION }}-${{ matrix.build_type }}-${{ hashFiles('conanfile.txt') }}
+          restore-keys: |
+            conan-${{ runner.os }}-clang${{ env.CLANG_VERSION }}-${{ matrix.build_type }}-
+
+      - name: Install Conan dependencies
+        run: |
+          conan install . \
+            --profile ./.conan2/profiles/clang-ci \
+            --build missing \
+            -s build_type=${{ matrix.build_type }}
+
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }} --parallel
+
+      # compile_commands.json is consumed by the lint job
+      - name: Upload compile_commands (Debug only)
+        if: matrix.build_type == 'Debug'
+        uses: actions/upload-artifact@v4
+        with:
+          name: compile-commands
+          path: build/conan-debug/compile_commands.json
+          retention-days: 1
+
+  test:
+    name: Test (ASAN + UBSan)
+    runs-on: ubuntu-24.04
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install toolchain
+        run: |
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
+            | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-${{ env.CLANG_VERSION }} main" \
+            | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update -q
+          sudo apt-get install -y \
+            clang-${{ env.CLANG_VERSION }} \
+            lld-${{ env.CLANG_VERSION }} \
+            libc++-${{ env.CLANG_VERSION }}-dev \
+            libc++abi-${{ env.CLANG_VERSION }}-dev \
+            nasm \
+            ninja-build \
+            cmake
+          sudo update-alternatives \
+            --install /usr/bin/clang clang /usr/bin/clang-${{ env.CLANG_VERSION }} 100
+          sudo update-alternatives \
+            --install /usr/bin/clang++ clang++ /usr/bin/clang++-${{ env.CLANG_VERSION }} 100
+
+      - name: Install Conan
+        run: pip install conan --quiet
+
+      - name: Cache Conan packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2/p
+          key: conan-${{ runner.os }}-clang${{ env.CLANG_VERSION }}-Debug-${{ hashFiles('conanfile.txt') }}
+          restore-keys: |
+            conan-${{ runner.os }}-clang${{ env.CLANG_VERSION }}-Debug-
+
+      - name: Install Conan dependencies (Debug)
+        run: |
+          conan install . \
+            --profile ./.conan2/profiles/clang-ci \
+            --build missing \
+            -s build_type=Debug
+
+      - name: Configure with sanitizers
+        run: |
+          cmake --preset conan-debug \
+            -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
+
+      - name: Build
+        run: cmake --build --preset conan-debug --parallel
+
+      - name: Run tests
+        env:
+          ASAN_OPTIONS: halt_on_error=1:abort_on_error=1:detect_leaks=1
+          UBSAN_OPTIONS: halt_on_error=1:abort_on_error=1:print_stacktrace=1
+        # --no-tests=ignore keeps the job green while the cmocka suite is still
+        # being written — flip to =error once the first tests land
+        run: ctest --test-dir build/conan-debug --output-on-failure --no-tests=ignore
+
+  lint:
+    name: Lint (clang-tidy)
+    runs-on: ubuntu-24.04
+    needs: build
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-tidy
+        run: |
+          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
+            | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-${{ env.CLANG_VERSION }} main" \
+            | sudo tee /etc/apt/sources.list.d/llvm.list
+          sudo apt-get update -q
+          sudo apt-get install -y clang-tidy-${{ env.CLANG_VERSION }}
+          sudo update-alternatives --install /usr/bin/clang-tidy clang-tidy \
+            /usr/bin/clang-tidy-${{ env.CLANG_VERSION }} 100
+
+      - name: Download compile_commands
+        uses: actions/download-artifact@v4
+        with:
+          name: compile-commands
+          path: build/conan-debug/
+
+      - name: Run clang-tidy
+        run: just lint
