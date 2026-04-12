@@ -1,0 +1,10 @@
+# IDE and Editors
+/.vscode/
+/.idea/
+/*.iml
+/*.swp
+
+# Artifacts
+/build/
+/cmake-build-*/
+/CMakeUserPresets.json

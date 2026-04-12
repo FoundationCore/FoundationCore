@@ -1,0 +1,58 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "toolchainFile": "${sourceDir}/cmake/toolchain-clang.cmake"
+    },
+    {
+      "name": "debug",
+      "displayName": "Clang · Debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Clang · Release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "conan-debug",
+      "displayName": "Conan + Clang · Debug",
+      "inherits": "debug",
+      "toolchainFile": "${sourceDir}/build/Debug/generators/conan_toolchain.cmake"
+    },
+    {
+      "name": "conan-release",
+      "displayName": "Conan + Clang · Release",
+      "inherits": "release",
+      "toolchainFile": "${sourceDir}/build/Release/generators/conan_toolchain.cmake"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "conan-debug",
+      "configurePreset": "conan-debug"
+    },
+    {
+      "name": "conan-release",
+      "configurePreset": "conan-release"
+    }
+  ]
+}
