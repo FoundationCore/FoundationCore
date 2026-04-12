@@ -2,10 +2,10 @@ name: CI
 
 on:
   push:
-    branches: [main]
-    tags-ignore: ["**"] # releases handled by release.yml
+    branches: [ main ]
+    tags-ignore: [ "**" ] # releases handled by release.yml
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 env:
   CLANG_VERSION: 19
@@ -68,6 +68,9 @@ jobs:
 
       - name: Install Conan
         run: pip install conan --quiet
+
+      - name: Create Conan default profile
+        run: conan profile detect --force
 
       - name: Cache Conan packages
         uses: actions/cache@v4
@@ -186,6 +189,11 @@ jobs:
         with:
           name: compile-commands
           path: build/conan-debug/
+
+      - name: Install just
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh \
+          | bash -s -- --to /usr/local/bin
 
       - name: Run clang-tidy
         run: just lint
