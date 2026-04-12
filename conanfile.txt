@@ -1,5 +1,85 @@
 [requires]
+# OpenSSL: RSA-1024 keypair generation, AES/CFB8 stream cipher for the
+# encryption handshake, and the non-standard SHA1 hex digest required by
+# Mojang's session server authentication flow.
+openssl/3.6.2
+
+# libsodium: Secure random byte generation for the verify token sent during
+# the encryption handshake. Deliberately kept separate from OpenSSL — sodium
+# is used only where its API is unambiguous; OpenSSL owns the protocol crypto.
 libsodium/1.0.21
+
+# libuv: Cross-platform event loop built on epoll. Owns TCP connection
+# lifecycle, accept, and the uv_queue_work thread pool used to offload
+# blocking operations (LMDB reads, chunk generation) off the network thread.
+libuv/1.51.0
+
+# liburing: io_uring interface for batched kernel I/O. Used alongside libuv
+# for high-throughput paths — chunk data floods on login (25+ packets) are
+# submitted as batched IORING_OP_SEND operations, eliminating per-packet
+# syscall overhead. Also used for deferred fsync after LMDB commits.
+liburing/2.13
+
+# libcurl: HTTP/HTTPS client for Mojang session server authentication.
+# Makes the outbound GET to sessionserver.mojang.com/session/minecraft/hasJoined
+# on each online-mode login — a one-shot request per connection, not a hot path.
+libcurl/8.19.0
+
+# zlib: Required by the Minecraft protocol. After the Set Compression packet
+# the framing format changes — all packets above the threshold are zlib-
+# deflated. This is a protocol requirement, not an internal choice.
+zlib/1.3.1
+
+# zstd: Internal compression only, not protocol-facing. Used for chunk storage
+# on disk and any caching layer. Significantly better ratio and speed than zlib
+# at level 1-3; supports dictionary training on representative chunk data for
+# improved compression of small NBT payloads.
+zstd/1.5.7
+
+# lmdb: Memory-mapped B-tree for world persistence. mdb_get() returns a direct
+# pointer into the mmap — zero copies on cache-hot reads. MVCC design allows
+# unlimited concurrent readers with no locking; one writer serializes at a
+# time. Used with MDB_NOSYNC + deferred liburing fsync for write throughput.
+lmdb/0.9.32
+
+# cjson: JSON parsing and generation for protocol text components (chat
+# messages, disconnect reasons, server list MOTD). Chosen for its minimal
+# footprint — single .c/.h pair with no transitive dependencies.
+cjson/1.7.19
+
+# fmt: Structured logging and string formatting across the codebase. Used for
+# all human-readable output (startup banners, per-connection logs, error
+# messages). Header-only mode keeps compile times low.
+fmt/12.1.0
+
+# cglm: SIMD-accelerated linear algebra (SSE2/AVX/NEON). Used for AABB
+# collision resolution in entity physics validation, vec3 arithmetic in the
+# DDA raycast (line-of-sight, combat reach), and mob bounding-box overlap
+# tests. Pairs with handwritten NASM kernels on hot paths.
+cglm/0.9.1
+
+# mimalloc: Drop-in replacement for glibc malloc. Segment-based free lists
+# give better cache locality for the small, frequent allocations produced by
+# packet parsing and per-tick entity updates. Outperforms jemalloc and
+# tcmalloc on server-like allocation patterns. Zero code changes required for
+# the base integration — LD_PRELOAD or link-time replacement both work.
+mimalloc/2.2.4
+
+# xxhash: Non-cryptographic hash for all runtime hash maps — chunk coordinate
+# → loaded chunk, player UUID → entity, etc. XXH3_64bits is the fastest
+# general-purpose hash for both bulk data and short keys.
+xxhash/0.8.3
+
+# libuuid: RFC 4122 UUID generation for entity IDs and session tokens. Used
+# where the protocol requires a standards-compliant UUID format rather
+# than a raw random buffer from libsodium.
+libuuid/1.0.3
+
+# cmocka: Unit testing framework. Provides setup/teardown per test, mock
+# expectations (will_return, expect_function_call), and structured failure
+# output. Used to TDD the packet codec, VarInt encoder/decoder, NBT parser,
+# and AABB collision logic against injected byte buffers — no live socket needed.
+cmocka/1.1.8
 
 [generators]
 CMakeDeps

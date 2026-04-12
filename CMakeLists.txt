@@ -24,8 +24,21 @@ set(CMAKE_ASM_NASM_FLAGS "-f elf64 -g -F dwarf")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}")
 list(APPEND CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
 
-# TODO: Add dependencies down below
+# Dependencies
 find_package(libsodium REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(fmt REQUIRED)
+find_package(ZLIB REQUIRED)
+find_package(libuv REQUIRED)
+find_package(liburing REQUIRED)
+find_package(CURL REQUIRED)
+find_package(cJSON REQUIRED)
+find_package(xxHash REQUIRED)
+find_package(mimalloc REQUIRED)
+find_package(zstd REQUIRED)
+find_package(lmdb REQUIRED)
+find_package(libuuid REQUIRED)
+find_package(cglm REQUIRED)
 
 # Sources
 file(GLOB_RECURSE C_SOURCES CONFIGURE_DEPENDS "src/*.c")
@@ -46,6 +59,19 @@ target_include_directories(
 
 # TODO: Link the dependencies down below
 target_link_libraries(${PROJECT_NAME} libsodium::libsodium)
+target_link_libraries(${PROJECT_NAME} fmt::fmt)
+target_link_libraries(${PROJECT_NAME} openssl::openssl)
+target_link_libraries(${PROJECT_NAME} ZLIB::ZLIB)
+target_link_libraries(${PROJECT_NAME} libuv::uv_a)
+target_link_libraries(${PROJECT_NAME} liburing::liburing)
+target_link_libraries(${PROJECT_NAME} CURL::libcurl)
+target_link_libraries(${PROJECT_NAME} cjson::cjson)
+target_link_libraries(${PROJECT_NAME} xxHash::xxhash)
+target_link_libraries(${PROJECT_NAME} mimalloc-static)
+target_link_libraries(${PROJECT_NAME} zstd::libzstd)
+target_link_libraries(${PROJECT_NAME} lmdb::lmdb)
+target_link_libraries(${PROJECT_NAME} libuuid::libuuid)
+target_link_libraries(${PROJECT_NAME} cglm::cglm)
 
 # Install
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
