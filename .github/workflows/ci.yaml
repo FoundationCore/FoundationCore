@@ -28,12 +28,18 @@ jobs:
           sudo update-alternatives --install /usr/bin/clang-format clang-format \
             /usr/bin/clang-format-${{ env.CLANG_VERSION }} 100
 
+      - name: Install just
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh \
+          | bash -s -- --to /usr/local/bin
+
       - name: Check formatting
         run: just format-check
 
   build:
     name: Build (${{ matrix.build_type }})
     runs-on: ubuntu-24.04
+    needs: format-check
     strategy:
       fail-fast: false
       matrix:
@@ -42,7 +48,6 @@ jobs:
             preset: conan-debug
           - build_type: Release
             preset: conan-release
-
     steps:
       - uses: actions/checkout@v4
 

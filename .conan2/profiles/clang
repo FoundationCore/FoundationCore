@@ -9,3 +9,4 @@ compiler.libcxx=libc++
 [conf]
 tools.cmake.cmaketoolchain:generator=Ninja
 tools.build:compiler_executables={"c": "clang", "cpp": "clang++"}
+tools.cmake.cmaketoolchain:user_presets=
