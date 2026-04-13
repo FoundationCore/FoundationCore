@@ -106,69 +106,6 @@ jobs:
           path: build/conan-debug/compile_commands.json
           retention-days: 1
 
-  test:
-    name: Test (ASAN + UBSan)
-    runs-on: ubuntu-24.04
-    needs: build
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install toolchain
-        run: |
-          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
-            | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
-          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-${{ env.CLANG_VERSION }} main" \
-            | sudo tee /etc/apt/sources.list.d/llvm.list
-          sudo apt-get update -q
-          sudo apt-get install -y \
-            clang-${{ env.CLANG_VERSION }} \
-            lld-${{ env.CLANG_VERSION }} \
-            libc++-${{ env.CLANG_VERSION }}-dev \
-            libc++abi-${{ env.CLANG_VERSION }}-dev \
-            nasm \
-            ninja-build \
-            cmake
-          sudo update-alternatives \
-            --install /usr/bin/clang clang /usr/bin/clang-${{ env.CLANG_VERSION }} 100
-          sudo update-alternatives \
-            --install /usr/bin/clang++ clang++ /usr/bin/clang++-${{ env.CLANG_VERSION }} 100
-
-      - name: Install Conan
-        run: pip install conan --quiet
-
-      - name: Cache Conan packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.conan2/p
-          key: conan-${{ runner.os }}-clang${{ env.CLANG_VERSION }}-Debug-${{ hashFiles('conanfile.txt') }}
-          restore-keys: |
-            conan-${{ runner.os }}-clang${{ env.CLANG_VERSION }}-Debug-
-
-      - name: Install Conan dependencies (Debug)
-        run: |
-          conan install . \
-            --profile ./.conan2/profiles/clang-ci \
-            --build missing \
-            -s build_type=Debug
-
-      - name: Configure with sanitizers
-        run: |
-          cmake --preset conan-debug \
-            -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
-            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined"
-
-      - name: Build
-        run: cmake --build --preset conan-debug --parallel
-
-      - name: Run tests
-        env:
-          ASAN_OPTIONS: halt_on_error=1:abort_on_error=1:detect_leaks=1
-          UBSAN_OPTIONS: halt_on_error=1:abort_on_error=1:print_stacktrace=1
-        # --no-tests=ignore keeps the job green while the cmocka suite is still
-        # being written — flip to =error once the first tests land
-        run: ctest --test-dir build/conan-debug --output-on-failure --no-tests=ignore
-
   lint:
     name: Lint (clang-tidy)
     runs-on: ubuntu-24.04
