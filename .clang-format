@@ -23,19 +23,44 @@ SpacesInSquareBrackets: false
 SpaceBeforeSquareBrackets: false
 SpaceAroundPointerQualifiers: Default
 PointerAlignment: Right
+DerivePointerAlignment: false
+
+BinPackArguments: false
+BinPackParameters: false
 
 SortIncludes: CaseSensitive
 IncludeBlocks: Regroup
+IncludeIsMainRegex: '(_test)?$'
 IncludeCategories:
-  # 1. Own project headers
+  # 1. FoundationCore public headers. The project style prefers angle-bracket
+  # includes such as <foundation_core/core/buffer.h>, but quoted form is kept
+  # here as a compatibility fallback.
+  - Regex: '^<foundation_core/'
+    Priority: 1
+    SortPriority: 1
+    CaseSensitive: true
   - Regex: '^"foundation_core/'
     Priority: 1
-  # 2. Standard C library
+    SortPriority: 1
+    CaseSensitive: true
+
+  # 2. Standard C library headers.
   - Regex: '^<(assert|complex|ctype|errno|fenv|float|inttypes|iso646|limits|locale|math|setjmp|signal|stdalign|stdarg|stdatomic|stdbool|stddef|stdint|stdio|stdlib|stdnoreturn|string|tgmath|threads|time|uchar|wchar|wctype)\.h>'
     Priority: 2
-  # 3. POSIX / system headers
-  - Regex: '^<'
+    SortPriority: 2
+    CaseSensitive: true
+
+  # 3. POSIX, system, and third-party angle-bracket headers.
+  - Regex: '^<.*>'
     Priority: 3
+    SortPriority: 3
+    CaseSensitive: true
+
+  # 4. Any remaining quoted includes.
+  - Regex: '.*'
+    Priority: 4
+    SortPriority: 4
+    CaseSensitive: true
 
 AlignConsecutiveAssignments:
   Enabled: true

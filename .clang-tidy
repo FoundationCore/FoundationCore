@@ -10,29 +10,77 @@ Checks: >
   -cert-err33-c
 
 CheckOptions:
-  - key:   readability-identifier-naming.FunctionCase
+  # Functions
+  - key: readability-identifier-naming.FunctionCase
     value: lower_case
-  - key:   readability-identifier-naming.VariableCase
+  - key: readability-identifier-naming.FunctionPrefix
+    value: fc_
+
+  # Variables
+  - key: readability-identifier-naming.VariableCase
     value: lower_case
-  - key:   readability-identifier-naming.GlobalVariableCase
+  - key: readability-identifier-naming.LocalVariableCase
     value: lower_case
-  - key:   readability-identifier-naming.GlobalVariablePrefix
+  - key: readability-identifier-naming.LocalPointerCase
+    value: lower_case
+  - key: readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key: readability-identifier-naming.PointerParameterCase
+    value: lower_case
+
+  # Globals
+  - key: readability-identifier-naming.GlobalVariableCase
+    value: lower_case
+  - key: readability-identifier-naming.GlobalVariablePrefix
     value: g_
-  - key:   readability-identifier-naming.MacroDefinitionCase
-    value: UPPER_CASE
-  - key:   readability-identifier-naming.EnumCase
-    value: UPPER_CASE
-  - key:   readability-identifier-naming.EnumConstantCase
-    value: UPPER_CASE
-  - key:   readability-identifier-naming.TypedefCase
+  - key: readability-identifier-naming.GlobalPointerCase
     value: lower_case
-  - key:   readability-identifier-naming.TypedefSuffix
-    value: _t
-  - key:   readability-identifier-naming.StructCase
+  - key: readability-identifier-naming.GlobalPointerPrefix
+    value: g_
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.StaticConstantCase
+    value: UPPER_CASE
+
+  # Preprocessor symbols
+  - key: readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.MacroDefinitionPrefix
+    value: FC_
+
+  # Enums
+  - key: readability-identifier-naming.EnumCase
     value: lower_case
-  - key:   readability-identifier-naming.StructSuffix
+  - key: readability-identifier-naming.EnumPrefix
+    value: fc_
+  - key: readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+  - key: readability-identifier-naming.EnumConstantPrefix
+    value: FC_
+
+  # Structs, unions, and typedefs
+  - key: readability-identifier-naming.StructCase
+    value: lower_case
+  - key: readability-identifier-naming.StructPrefix
+    value: fc_
+  - key: readability-identifier-naming.UnionCase
+    value: lower_case
+  - key: readability-identifier-naming.UnionPrefix
+    value: fc_
+  - key: readability-identifier-naming.TypedefCase
+    value: lower_case
+  - key: readability-identifier-naming.TypedefPrefix
+    value: fc_
+  - key: readability-identifier-naming.TypedefSuffix
     value: _t
 
+  # Struct fields in C cannot be reliably split into "internal/private" versus
+  # intentionally open POD fields by clang-tidy alone. We therefore enforce the
+  # casing here and keep the m_ prefix as a documented review rule for internal
+  # module state.
+  - key: readability-identifier-naming.MemberCase
+    value: lower_case
+
 WarningsAsErrors: '*'
-HeaderFilterRegex: 'include/foundation_core/.*'
+HeaderFilterRegex: '^(include/foundation_core|src|tests)/.*'
 FormatStyle: file
