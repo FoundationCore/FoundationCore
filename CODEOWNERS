@@ -1,0 +1,5 @@
+# FoundationCore CODEOWNERS
+# For now, all paths are owned by Lucas (@thecodebreeze).
+# As the team stabilizes, this file can be expanded with module-specific ownership.
+
+* @thecodebreeze
