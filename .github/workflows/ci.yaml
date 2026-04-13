@@ -88,7 +88,7 @@ jobs:
       - name: Install Conan dependencies
         run: |
           conan install . \
-            --profile ./.conan2/profiles/clang --build missing \
+            --profile ./.conan2/profiles/clang-ci --build missing \
             -s build_type=${{ matrix.build_type }}
 
       - name: Configure
@@ -148,7 +148,7 @@ jobs:
       - name: Install Conan dependencies (Debug)
         run: |
           conan install . \
-            --profile ./.conan2/profiles/clang \
+            --profile ./.conan2/profiles/clang-ci \
             --build missing \
             -s build_type=Debug
 

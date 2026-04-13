@@ -1,0 +1,12 @@
+[settings]
+os=Linux
+arch=x86_64
+build_type=Release
+compiler=clang
+compiler.version=22
+compiler.libcxx=libc++
+
+[conf]
+tools.cmake.cmaketoolchain:generator=Ninja
+tools.cmake.cmaketoolchain:user_presets=
+tools.build:compiler_executables={"c": "clang-22", "cpp": "clang++-22"}
