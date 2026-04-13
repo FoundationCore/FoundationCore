@@ -57,7 +57,7 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-# TODO: Link the dependencies down below
+# Dependencies
 target_link_libraries(${PROJECT_NAME} libsodium::libsodium)
 target_link_libraries(${PROJECT_NAME} fmt::fmt)
 target_link_libraries(${PROJECT_NAME} openssl::openssl)
