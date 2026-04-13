@@ -6,6 +6,7 @@ on:
       # Matches v0.1.0, v1.2.3, etc. Pre-release tags (v1.0.0-alpha.1) are
       # intentionally excluded — add a second pattern if you want them.
       - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-*"
 
 permissions:
   contents: write # required for gh release create
@@ -18,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # git-cliff needs full history to traverse tags
+          fetch-depth: 0
 
       - name: Install git-cliff
         run: |
@@ -28,16 +29,28 @@ jobs:
             | tar xz --strip-components=1
           sudo mv git-cliff /usr/local/bin/
 
-      # Generates only the section for this tag, no header/footer boilerplate
+      - name: Detect pre-release
+        id: flags
+        run: |
+          if [[ "${{ github.ref_name }}" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Generate release notes
         run: git-cliff --current --strip all -o RELEASE_NOTES.md
 
-      # Creates the release in draft=false state with no binary attachments.
-      # Add `--draft` here if you want a review step before publishing.
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          PRERELEASE_FLAG=""
+          if [[ "${{ steps.flags.outputs.prerelease }}" == "true" ]]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+
           gh release create "${{ github.ref_name }}" \
             --title "FoundationCore ${{ github.ref_name }}" \
-            --notes-file RELEASE_NOTES.md
+            --notes-file RELEASE_NOTES.md \
+            $PRERELEASE_FLAG
