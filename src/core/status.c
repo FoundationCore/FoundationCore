@@ -7,7 +7,7 @@
 
 bool fc_status_is_ok(const fc_status_t status)
 {
-    return status == FC_STATUS_OK;
+    return (bool)(status == FC_STATUS_OK);
 }
 
 const char *fc_status_to_cstr(const fc_status_t status)

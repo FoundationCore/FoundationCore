@@ -65,10 +65,10 @@ bool fc_string_view_equal(const fc_string_view_t left, const fc_string_view_t ri
         return true;
     }
 
-    return memcmp(left.data, right.data, left.length) == 0;
+    return (bool)(memcmp(left.data, right.data, left.length) == 0);
 }
 
 bool fc_string_view_is_empty(const fc_string_view_t view)
 {
-    return view.length == 0U;
+    return (bool)(view.length == 0U);
 }

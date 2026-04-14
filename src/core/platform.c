@@ -17,7 +17,7 @@ bool fc_platform_is_aligned(const void *pointer, const size_t alignment)
     }
 
     address = (uintptr_t) pointer;
-    return (address % alignment) == 0U;
+    return (bool)((address % alignment) == 0U);
 }
 
 fc_status_t fc_platform_align_up_u64(const uint64_t value,
