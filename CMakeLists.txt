@@ -43,14 +43,15 @@ find_package(cglm REQUIRED)
 # Sources
 file(GLOB_RECURSE C_SOURCES CONFIGURE_DEPENDS "src/*.c")
 file(GLOB_RECURSE ASM_SOURCES CONFIGURE_DEPENDS "src/*.asm")
+file(GLOB_RECURSE HEADER_SOURCES CONFIGURE_DEPENDS "include/*.h")
 
 # Binary
 add_executable(
         ${PROJECT_NAME}
         ${C_SOURCES}
         ${ASM_SOURCES}
+        ${HEADER_SOURCES}
 )
-
 target_include_directories(
         ${PROJECT_NAME}
         PRIVATE
