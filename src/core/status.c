@@ -1,5 +1,5 @@
 /**
- * @file status.c
+ * @file core/status.c
  * @brief Implementation of the shared project-wide status surface.
  */
 

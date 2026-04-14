@@ -1,5 +1,5 @@
 /**
- * @file platform.c
+ * @file core/platform.c
  * @brief Implementation of narrow low-level platform helpers.
  */
 

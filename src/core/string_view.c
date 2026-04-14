@@ -1,6 +1,6 @@
 /**
- * @file string_view.c
- * @brief Implementation of the FC-002 example module.
+ * @file core/string_view.c
+ * @brief Implementation of the string view.
  */
 #include <foundation_core/core/status.h>
 #include <foundation_core/core/string_view.h>
